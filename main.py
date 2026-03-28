@@ -3,7 +3,6 @@ import sys
 
 pygame.init()
 
-#Налаштування
 TILE_SIZE = 40
 FPS = 60
 
