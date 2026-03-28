@@ -3,7 +3,7 @@ import sys
 
 pygame.init()
 
-#Налаштування
+# Налаштування
 TILE_SIZE = 40
 FPS = 60
 
@@ -39,7 +39,7 @@ screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Battle City Remake")
 clock = pygame.time.Clock()
 
-#Завантаження текстур
+# Завантаження текстур
 def load_image(path, size):
     img = pygame.image.load(path)
     return pygame.transform.scale(img, size)
@@ -50,7 +50,7 @@ bullet_img = load_image("bullet.png", (10, 10))
 background_img = load_image("background.png", (WIDTH, HEIGHT))
 
 
-#Класи
+# Класи
 class GameObject:
     def __init__(self, x, y, size, image=None, color=None):
         self.rect = pygame.Rect(x, y, size, size)
@@ -87,12 +87,10 @@ class Player(GameObject):
 
 class Bullet:
     def __init__(self, x, y, direction):
-        size = 30
-        self.rect = pygame.Rect(0, 0, size, size)
-        self.rect.center = (x, y)
+        self.rect = pygame.Rect(x, y, 10, 10)
         self.speed = 8
         self.direction = direction
-        self.image = pygame.transform.scale(bullet_img, (size, size))
+        self.image = bullet_img
 
     def move(self):
         self.rect.x += self.direction[0] * self.speed
@@ -111,7 +109,7 @@ class Obstacle(GameObject):
 
 
 
-#Завантаження рівня
+# Завантаження рівня
 def load_level(level_map):
     obstacles = []
     player = None
@@ -132,19 +130,19 @@ def load_level(level_map):
 
 player, obstacles = load_level(level_map)
 bullets = []
-player_health = 5
-bullet_count = 3
-bullet_cool = 0
-#Цикл
+
+
+# Головний цикл
 while True:
     clock.tick(FPS)
-    #Фон
+
+    # ФОН
     if background_img:
         screen.blit(background_img, (0, 0))
     else:
         screen.fill((255, 255, 255))
 
-    #Події
+    # Події
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             pygame.quit()
@@ -152,17 +150,9 @@ while True:
 
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_SPACE:
-                if bullet_count >= 1:
-                    bullet_count -= 1
-                    bullets.append(player.shoot())
+                bullets.append(player.shoot())
 
-    if bullet_count < 3:
-        bullet_cool += 1
-        if bullet_cool >=100:
-            bullet_cool = 0 
-            bullet_count += 1
-
-    #Управління
+    # Управління
     keys = pygame.key.get_pressed()
     dx, dy = 0, 0
 
@@ -177,22 +167,22 @@ while True:
 
     player.move(dx, dy, obstacles)
 
-    #Рух пуль
+    # Рух куль
     for bullet in bullets[:]:
         bullet.move()
 
-        #Видалення пуль за межами
+        # Видалення за межами
         if not screen.get_rect().colliderect(bullet.rect):
             bullets.remove(bullet)
             continue
 
-        #Зіткнення пуль зі стінами
+        # Зіткнення зі стінами
         for obs in obstacles:
             if bullet.rect.colliderect(obs.rect):
                 bullets.remove(bullet)
                 break
 
-    #Малювання
+    # Малювання
     player.draw()
 
     for obs in obstacles:
@@ -201,8 +191,4 @@ while True:
     for bullet in bullets:
         bullet.draw()
 
-    for i in range(player_health):
-        pygame.draw.rect(screen, (255, 0, 0), (60 + i * 35, 15, 40, 15))
-    for i in range(bullet_count):
-        pygame.draw.rect(screen, (0, 191, 255), (60 + i * 35, 33, 30, 15))
     pygame.display.flip()
