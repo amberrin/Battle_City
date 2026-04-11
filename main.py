@@ -4,6 +4,10 @@ import sys
 
 pygame.init()
 #Налаштування
+import sys
+
+pygame.init()
+
 TILE_SIZE = 40
 FPS = 60
 
@@ -25,6 +29,7 @@ level_map = [
     "......w.............",
     "....................",
     ".ww......e.....wwww.",
+    ".ww............wwww.",
     "...............w....",
     "......wwww..........",
 ]
@@ -44,13 +49,72 @@ def load_image(path, size):
     img = pygame.image.load(path)
     return pygame.transform.scale(img, size)
 
-player_img = load_image("player.png", (TILE_SIZE, TILE_SIZE))
 wall_img = load_image("wall.jpg", (TILE_SIZE, TILE_SIZE))
 bullet_img = load_image("bullet.png", (10, 10))
 background_img = load_image("background.png", (WIDTH, HEIGHT))
-enemy_img = load_image("enemy.png", (TILE_SIZE, TILE_SIZE))
+enemy_left_img = load_image("enemyl.png", (TILE_SIZE, TILE_SIZE))
+enemy_right_img = load_image("enemyr.png", (TILE_SIZE, TILE_SIZE))
+enemy_up_img = load_image("enemy.png", (TILE_SIZE, TILE_SIZE))
+enemy_down_img = load_image("enemy_d.png", (TILE_SIZE, TILE_SIZE))
+player_left_img = load_image("playerl.png", (TILE_SIZE, TILE_SIZE))
+player_right_img = load_image("playerr.png", (TILE_SIZE, TILE_SIZE))
+player_up_img = load_image("player.png", (TILE_SIZE, TILE_SIZE))
+player_down_img = load_image("player_d.png", (TILE_SIZE, TILE_SIZE))
+class Button():
+    def __init__(self, color, x, y, w, h, text, fsize, txt_color):
 
+        self.width = w
+        self.height = h
+        self.color = color
 
+        self.image = pygame.Surface([self.width, self.height])
+        self.image.fill((color))
+        
+        self.rect = self.image.get_rect()
+        self.rect.x = x
+        self.rect.y = y
+
+        self.fsize = fsize
+        self.text = text
+        self.txt_color = txt_color
+        self.txt_image = pygame.font.Font(None, fsize).render(text, True, txt_color)
+    def draw(self, shift_x, shift_y): # цей метод малює кнопку із тектом в середині. Сам текст зміщенний на величини shift_x та shift_y
+        screen.blit(self.image, (self.rect.x, self.rect.y))
+        screen.blit(self.txt_image, (self.rect.x + shift_x, self.rect.y + shift_y))
+
+background=load_image(("tmenu.png"),(800,800))
+btn_start = Button((66, 49, 133, 1), 260, 350, 280, 70, 'START GAME',50, (255, 255, 255))
+btn_end = Button((66, 49, 133, 1), 260, 445, 280, 70,'CLOSE' ,50, (255,255,255))
+btn_menu = Button((255, 29, 109, 10), 260, 350, 280, 70, 'MENU',50, (255, 255, 255))
+btn_end1 = Button((0, 180, 0, 0), 260, 445, 280, 70,'CLOSE' ,50, (255,255,255))
+btn_restart = Button((255, 29, 109, 10), 260, 445, 280, 70,'RESTART' ,50, (255,255,255))
+kill = False
+menu = True
+game = False
+while menu:
+    for e in pygame.event.get():
+        if e.type == pygame.QUIT:
+            menu=False
+            pygame.quit()
+            sys.exit()
+    screen.blit(background,(0,0))
+    btn_start.draw(15,5)
+    btn_end.draw(15,5)
+    pygame.display.update()
+    pygame.time.delay(50)
+    pos_x, pos_y = pygame.mouse.get_pos()
+    if e.type == pygame.MOUSEBUTTONDOWN:
+        if btn_start.rect.collidepoint((pos_x, pos_y)) and e.type == pygame.MOUSEBUTTONDOWN:
+            menu = False
+            game = True
+            kill = False
+        if btn_end.rect.collidepoint((pos_x, pos_y)) and e.type == pygame.MOUSEBUTTONDOWN:
+            menu = False
+            game = False
+            kill = False
+            win = False
+            pygame.quit()
+            sys.exit()
 #Класи
 class GameObject:
     def __init__(self, x, y, size, image=None, color=None):
@@ -83,7 +147,7 @@ class GameObject:
 
 class Player(GameObject):
     def __init__(self, x, y):
-        super().__init__(x, y, TILE_SIZE, image=player_img, color=(0, 200, 0))
+        super().__init__(x, y, TILE_SIZE, image=player_right_img, color=(0, 200, 0))
         self.speed = 5
         self.direction = (0, -1)
 
@@ -92,6 +156,16 @@ class Player(GameObject):
 
         if dx != 0 or dy != 0:
             self.direction = (dx, dy)
+
+        if dx < 0:
+            self.image = player_left_img
+        elif dx > 0:
+            self.image = player_right_img
+
+        if dy < 0:
+            self.image = player_up_img
+        elif dy > 0:
+            self.image = player_down_img
 
     def shoot(self):
         return Bullet(self.rect.centerx, self.rect.centery, self.direction)
@@ -125,7 +199,7 @@ class Obstacle(GameObject):
 
 class Enemy(GameObject):
     def __init__(self, x, y):
-        super().__init__(x, y, TILE_SIZE, image=enemy_img, color=(0, 200, 0))
+        super().__init__(x, y, TILE_SIZE, image=enemy_up_img, color=(0, 200, 0))
         self.speed = 3
         self.direction = random.choice([(1,0), (-1,0), (0,1), (0,-1)])
         self.change_dir_timer = 0
@@ -144,6 +218,16 @@ class Enemy(GameObject):
 
         dx, dy = self.direction
         self.move(dx, dy, obstacles, self.speed)
+
+        if dx < 0:
+            self.image = enemy_left_img
+        elif dx > 0:
+            self.image = enemy_right_img
+
+        if dy < 0:
+            self.image = enemy_up_img
+        elif dy > 0:
+            self.image = enemy_down_img
 
         current_time = pygame.time.get_ticks()
 
@@ -334,6 +418,12 @@ while True:
         if bullet.rect.colliderect(player.rect):
             enemy_bullets.remove(bullet)
             player_health -= 1
+
+        for obs in obstacles:
+            if bullet.rect.colliderect(obs.rect):
+                for bullet in enemy_bullets[:]:
+                    enemy_bullets.remove(bullet)
+                    break
     
     if player_health <= 0:
         game_over = True
